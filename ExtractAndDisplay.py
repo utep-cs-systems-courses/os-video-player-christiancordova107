@@ -1,6 +1,5 @@
 #!/usr/bin/env python3
 
-# Producer needs to produce faster for smooth (fps)
 
 import cv2
 import threading
@@ -17,7 +16,6 @@ class Queue:
 # Reads mp4 to generate original frames and puts them in the color queue
 class ExtractFrame(threading.Thread):
     def __init__(self, file, queues, max_frames=999):
-        # print("Init ExtractFrame")
         threading.Thread.__init__(self)
         self.file = file
         self.queues = queues
@@ -25,7 +23,6 @@ class ExtractFrame(threading.Thread):
 
     # generate frame and put in color queue
     def run(self):
-        # print("Run Extract")
         # Initialize frame count to not go beyond the number of frames in the video
         count = 0
 
@@ -39,7 +36,7 @@ class ExtractFrame(threading.Thread):
             # Uses Empty cells, so check if any Empty available. Otherwise, block thread.
             self.queues.empty.acquire()
 
-            # Insert into Q
+            # Insert into color queue
             self.queues.qLock.acquire()
             self.queues.color_queue.put(frame)
             self.queues.qLock.release()
@@ -47,24 +44,21 @@ class ExtractFrame(threading.Thread):
             self.queues.full.release()
 
             count += 1
-        # print('Frame extraction complete')
 
-# BW-izer thread. Reads color frames from q. Generates monochrome frames. Put monochrome frames into q2.
+# thread. Reads color frames from color queue. Generates monochrome frames. Put monochrome frames into gray queue.
 class ConvertToGrayscale(threading.Thread):
 
     def __init__(self, queues, max_frames):
-        # print("Init ConvertFrame")
         threading.Thread.__init__(self)
         self.queues = queues
         self.max_frames = max_frames
 
     # Reads color frames -> generates monochrome.
     def run(self):
-        # print("Run Convert")
         count = 0
 
         while count < self.max_frames:
-            # Check if available frames from q, otherwise, block thread.
+            # Check if available frames from color queue, otherwise, block thread.
             if not self.queues.color_queue.empty():
                 # Get frame.
                 frame = self.queues.color_queue.get()
@@ -77,26 +71,23 @@ class ConvertToGrayscale(threading.Thread):
                 self.queues.qLock.release()
 
                 count += 1
-        # print('Frame conversion complete')
 
 
 # Displayer thread. Reads monochrome frames. Display frames at a normal frame rate.
 class DisplayFrame(threading.Thread):
 
     def __init__(self, queues, max_frames):
-        # print("Init DisplayFrame")
         threading.Thread.__init__(self)
         self.queues = queues
         self.max_frames = max_frames
 
-    # Produces empty Q cells. Thread takes frames from q2 and displays them
+    # Produces empty cells. Thread takes frames from gray queue and displays them
     def run(self):
-        # print("Run DisplayFrame")
         count = 0
 
         # Go through each frame in the buffer until the buffer is empty.
         while count < self.max_frames:
-            # Uses Full cells, so check if any Full available and any frames in q2. Otherwise, block thread.
+            # Uses Full cells, so check if any Full available and any frames in gray queue. Otherwise, block thread.
             if not self.queues.gray_queue.empty():
                 self.queues.full.acquire()
 
@@ -112,8 +103,8 @@ class DisplayFrame(threading.Thread):
                 if cv2.waitKey(21) and 0xFF == ord("q"):
                     break
 
-        # print('Finished displaying all frames')
-        # cleanup the windows
+        
+        # remove all windows
         cv2.destroyAllWindows()
 
 def main():

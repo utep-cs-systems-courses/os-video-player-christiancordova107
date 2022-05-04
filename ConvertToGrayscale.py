@@ -1,40 +1,30 @@
 #!/usr/bin/env python3
 
-import cv2
-
-# globals
-outputDir    = 'frames'
-
-# initialize frame count
+# frame cout
 count = 0
 
-# get the next frame file name
-inFileName = f'{outputDir}/frame_{count:04d}.bmp'
+# get frame
+input_file = "frames/frame_%04d.jpg" %count
 
 
-# load the next file
-inputFrame = cv2.imread(inFileName, cv2.IMREAD_COLOR)
+# read file
+current_frame = cv2.imread(input_file, cv2.IMREAD_COLOR)
 
-while inputFrame is not None and count < 72:
-    print(f'Converting frame {count}')
+while current_frame is not None:
 
     # convert the image to grayscale
-    grayscaleFrame = cv2.cvtColor(inputFrame, cv2.COLOR_BGR2GRAY)
+    gray_scale_frame = cv2.cvtColor(current_frame, cv2.COLOR_BGR2GRAY)
     
     # generate output file name
-    outFileName = f'{outputDir}/grayscale_{count:04d}.bmp'
+    output_file_name = "gray_frames/grayscale_%04d.jpg" %count
 
     # write output file
-    cv2.imwrite(outFileName, grayscaleFrame)
+    cv2.imwrite(output_file_name, gray_scale_frame)
 
     count += 1
 
     # generate input file name for the next frame
-    inFileName = f'{outputDir}/frame_{count:04d}.bmp'
+    input_file = "frames/frame_%04d.jpg" %count
     
     # load the next frame
-    inputFrame = cv2.imread(inFileName, cv2.IMREAD_COLOR)
-
-
-    
-    
+    current_frame = cv2.imread(input_file, cv2.IMREAD_COLOR)
